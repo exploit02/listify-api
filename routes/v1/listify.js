@@ -82,4 +82,26 @@ listify.patch("/name/:id", (req, res, next) => {
         });
 });
 
+listify.delete("/:id", (req, res, next) => {
+    let id = req.params.id;
+    req.db
+        .collection("lists")
+        .deleteOne({ _id: ObjectId(id) })
+        .then((result) => {
+            res.status(200).json({
+                success: true,
+                message: "Listitem deleted successfully",
+                result: { deletedCount: result.deletedCount },
+            });
+        })
+        .catch((err) => {
+            console.error(err);
+            res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                result: [],
+            });
+        });
+});
+
 module.exports = listify;
