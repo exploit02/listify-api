@@ -56,31 +56,40 @@ listify.post(
     }
 );
 
-listify.patch("/name/:id", (req, res, next) => {
-    let listid = req.params.id;
-    req.db
-        .collection("lists")
-        .findOneAndUpdate(
-            { _id: ObjectId(listid) },
-            { $set: { name: req.body.name } },
-            { returnNewDocument: true }
-        )
-        .then((result) => {
-            res.status(200).json({
-                success: true,
-                message: "Listitem updated successfully",
-                result: result.value,
+listify.patch(
+    "/name/:id",
+    [check("name", "name can't be empty").not().isEmpty()],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
+
+        let listid = req.params.id;
+        req.db
+            .collection("lists")
+            .findOneAndUpdate(
+                { _id: ObjectId(listid) },
+                { $set: { name: req.body.name } },
+                { returnNewDocument: true }
+            )
+            .then((result) => {
+                res.status(200).json({
+                    success: true,
+                    message: "Listitem updated successfully",
+                    result: result.value,
+                });
+            })
+            .catch((err) => {
+                console.error(err);
+                res.status(500).json({
+                    success: false,
+                    message: "Internal server error",
+                    result: [],
+                });
             });
-        })
-        .catch((err) => {
-            console.error(err);
-            res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                result: [],
-            });
-        });
-});
+    }
+);
 
 listify.delete("/:id", (req, res, next) => {
     let id = req.params.id;
