@@ -4,7 +4,8 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
-
+const MongoClient = require("mongodb").MongoClient;
+let dbConnection = null;
 var indexRouter = require("./routes/index");
 
 var app = express();
@@ -19,6 +20,36 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
+
+const connectDB = () =>
+    new Promise((resolve, reject) => {
+        if (dbConnection) {
+            resolve(dbConnection);
+        } else {
+            MongoClient.connect(process.env.SRV, { useUnifiedTopology: true })
+                .then((dbref) => {
+                    dbConnection = dbref.db(process.env.DBNAME);
+                    resolve(dbConnection);
+                })
+                .catch((err) => {
+                    reject(err);
+                });
+        }
+    });
+
+app.use((req, res, next) => {
+    connectDB()
+        .then((db) => {
+            req.db = db;
+            next();
+        })
+        .catch((err) => {
+            res.status(500).json({
+                success: false,
+                message: "Database Connection error",
+            });
+        });
+});
 
 app.use("/prod", indexRouter);
 
