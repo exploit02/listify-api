@@ -26,7 +26,10 @@ listify.get(["/", "/:id"], (req, res, next) => {
 
 listify.post(
     "/",
-    [check("listitem", "listitem can't be empty").not().isEmpty()],
+    [
+        check("name", "name can't be empty").not().isEmpty(),
+        check("completed", "completed can't be empty").not().isEmpty(),
+    ],
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -52,5 +55,31 @@ listify.post(
             });
     }
 );
+
+listify.patch("/name/:id", (req, res, next) => {
+    let listid = req.params.id;
+    req.db
+        .collection("lists")
+        .findOneAndUpdate(
+            { _id: ObjectId(listid) },
+            { $set: { name: req.body.name } },
+            { returnNewDocument: true }
+        )
+        .then((result) => {
+            res.status(200).json({
+                success: true,
+                message: "Listitem updated successfully",
+                result: result.value,
+            });
+        })
+        .catch((err) => {
+            console.error(err);
+            res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                result: [],
+            });
+        });
+});
 
 module.exports = listify;
