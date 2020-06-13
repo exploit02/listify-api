@@ -19,7 +19,7 @@ listify.get(["/", "/:id"], (req, res, next) => {
             console.error(err);
             res.status(500).json({
                 success: false,
-                message: "Internal server error !",
+                message: "Internal Server Error !",
             });
         });
 });
@@ -50,7 +50,7 @@ listify.post(
                 console.error(err);
                 res.status(500).json({
                     success: false,
-                    message: "Internal server error !",
+                    message: "Internal Server Error !",
                 });
             });
     }
@@ -83,9 +83,49 @@ listify.patch(
             .catch((err) => {
                 console.error(err);
                 res.status(500).json({
-                    success: false,
-                    message: "Internal server error",
-                    result: [],
+                    success: true,
+                    message: "Internal Server Error !",
+                    result: result.value,
+                });
+            });
+    }
+);
+
+listify.patch(
+    "/statuschange/:id",
+    [
+        check(
+            "completed",
+            "completed field can't be empty for status change call"
+        )
+            .not()
+            .isEmpty(),
+    ],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
+        let id = req.params.id;
+        req.db
+            .collection("lists")
+            .findOneAndUpdate(
+                { _id: ObjectId(id) },
+                { $set: { completed: req.body.completed } }
+            )
+            .then((result) => {
+                res.status(200).json({
+                    success: true,
+                    message: "Listitem updated successfully",
+                    result: result.value,
+                });
+            })
+            .catch((err) => {
+                console.error(err);
+                res.status(500).json({
+                    success: true,
+                    message: "Internal Server Error !",
+                    result: result.value,
                 });
             });
     }
@@ -107,7 +147,7 @@ listify.delete("/:id", (req, res, next) => {
             console.error(err);
             res.status(500).json({
                 success: false,
-                message: "Internal server error",
+                message: "Internal Server Error !",
                 result: [],
             });
         });
